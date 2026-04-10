@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Topic 4: Passing data to EJS - title variable -->
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📝 <%= title %></h1>
+            <p>Simple Note Manager - CA3 Project</p>
+        </header>
+
+        <!-- WORKING FORM - Add New Note -->
+        <div class="add-note-section">
+            <h2>➕ Add New Note</h2>
+            <form action="/add" method="POST">
+                <div class="form-group">
+                    <label for="title">Title:</label>
+                    <input type="text" id="title" name="title" required placeholder="Enter note title">
+                </div>
+                <div class="form-group">
+                    <label for="body">Body:</label>
+                    <textarea id="body" name="body" required placeholder="Enter note content" rows="4"></textarea>
+                </div>
+                <button type="submit" class="btn-add">Add Note</button>
+            </form>
+        </div>
+
+        <!-- Display Notes from Database -->
+        <div class="notes-section">
+            <h2>📋 Your Notes (<%= notes.length %>)</h2>
+            
+            <% if (notes.length === 0) { %>
+                <p class="no-notes">No notes yet. Add your first note above!</p>
+            <% } else { %>
+                <div class="notes-grid">
+                    <!-- Topic 4: Loop through notes data passed from server -->
+                    <% notes.forEach(function(note) { %>
+                        <div class="note-card">
+                            <h3><%= note.title %></h3>
+                            <p><%= note.body %></p>
+                            <div class="note-meta">
+                                <small>Created: <%= new Date(note.createdAt).toLocaleDateString() %></small>
+                            </div>
+                            <div class="note-actions">
+                                <!-- WORKING DELETE BUTTON -->
+                                <form action="/delete/<%= note._id %>" method="POST" style="display: inline;">
+                                    <button type="submit" class="btn-delete" onclick="return confirm('Delete this note?')">🗑️ Delete</button>
+                                </form>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            <% } %>
+        </div>
+
+        <footer>
+            <p>NoteManager - Covers all 7 CA3 Topics</p>
+            <p>CLI: <code>node cli/app.js --help</code></p>
+        </footer>
+    </div>
+</body>
+</html>

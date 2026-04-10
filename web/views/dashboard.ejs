@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-left">
+            <h1>NoteManager</h1>
+        </div>
+        <div class="nav-right">
+            <span class="user-name">User: <%= userName %></span>
+            <a href="/auth/logout" class="btn-logout">Logout</a>
+            <button onclick="deleteAccount()" class="btn-delete-account">Delete Account</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-card total">
+                <h3><%= stats.total %></h3>
+                <p>Total Notes</p>
+            </div>
+            <div class="stat-card pending">
+                <h3><%= stats.pending %></h3>
+                <p>Pending</p>
+            </div>
+            <div class="stat-card progress">
+                <h3><%= stats.inProgress %></h3>
+                <p>In Progress</p>
+            </div>
+            <div class="stat-card completed">
+                <h3><%= stats.completed %></h3>
+                <p>Completed</p>
+            </div>
+        </div>
+
+        <div class="add-note-section">
+            <h2>Add New Note</h2>
+            <form action="/add" method="POST">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="title">Title</label>
+                        <input type="text" id="title" name="title" required placeholder="Enter note title" maxlength="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="status">Status</label>
+                        <select id="status" name="status">
+                            <option value="pending">Pending</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="priority">Priority</label>
+                        <select id="priority" name="priority">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <input type="text" id="category" name="category" placeholder="e.g., Work, Personal, Study" maxlength="50">
+                </div>
+                <div class="form-group">
+                    <label for="body">Body</label>
+                    <textarea id="body" name="body" required placeholder="Enter note content" rows="4" maxlength="5000"></textarea>
+                    <small class="char-count">0 / 5000 characters</small>
+                </div>
+                <button type="submit" class="btn-add">Add Note</button>
+            </form>
+        </div>
+
+        <div class="controls-section">
+            <div class="filter-controls">
+                <label>Filter by Status:</label>
+                <a href="/dashboard?filter=all&sort=<%= sort %>" class="filter-btn <%= filter === 'all' ? 'active' : '' %>">All</a>
+                <a href="/dashboard?filter=pending&sort=<%= sort %>" class="filter-btn <%= filter === 'pending' ? 'active' : '' %>">Pending</a>
+                <a href="/dashboard?filter=in-progress&sort=<%= sort %>" class="filter-btn <%= filter === 'in-progress' ? 'active' : '' %>">In Progress</a>
+                <a href="/dashboard?filter=completed&sort=<%= sort %>" class="filter-btn <%= filter === 'completed' ? 'active' : '' %>">Completed</a>
+            </div>
+            <div class="sort-controls">
+                <label>Sort by:</label>
+                <a href="/dashboard?filter=<%= filter %>&sort=newest" class="sort-btn <%= sort === 'newest' ? 'active' : '' %>">Newest</a>
+                <a href="/dashboard?filter=<%= filter %>&sort=oldest" class="sort-btn <%= sort === 'oldest' ? 'active' : '' %>">Oldest</a>
+                <a href="/dashboard?filter=<%= filter %>&sort=status" class="sort-btn <%= sort === 'status' ? 'active' : '' %>">Status</a>
+            </div>
+        </div>
+
+        <div class="notes-section">
+            <h2>Your Notes (<%= notes.length %>)</h2>
+            
+            <% if (notes.length === 0) { %>
+                <p class="no-notes">No notes found. Add your first note above!</p>
+            <% } else { %>
+                <div class="notes-grid">
+                    <% notes.forEach(function(note) { 
+                        var escapedBody = note.body.replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '');
+                        var previewText = note.body.length > 200 ? note.body.substring(0, 200) + '...' : note.body;
+                    %>
+                        <div class="note-card priority-<%= note.priority %>">
+                            <div class="note-header">
+                                <h3><%= note.title %></h3>
+                                <span class="status-badge status-<%= note.status %>">
+                                    <%= note.status.replace('-', ' ') %>
+                                </span>
+                            </div>
+                            <div class="note-body-container">
+                                <p class="note-body" id="note-<%= note._id %>"><%= previewText %></p>
+                                <% if (note.body.length > 200) { %>
+                                    <button class="btn-read-more" onclick="toggleReadMore('<%= note._id %>', '<%= escapedBody %>', event)">
+                                        Read More
+                                    </button>
+                                <% } %>
+                            </div>
+                            <div class="note-meta">
+                                <span class="priority-badge priority-<%= note.priority %>">
+                                    <%= note.priority %> priority
+                                </span>
+                                <% if (note.category && note.category !== 'general') { %>
+                                    <span class="category-badge"><%= note.category %></span>
+                                <% } %>
+                                <small><%= new Date(note.createdAt).toLocaleDateString() %></small>
+                            </div>
+                           <div class="note-actions">
+    <a href="/edit/<%= note._id %>" class="btn-edit">Edit</a>
+    <form action="/delete/<%= note._id %>" method="POST" class="delete-form">
+        <button type="submit" class="btn-delete" onclick="return confirm('Delete this note?')">Delete</button>
+    </form>
+</div>
+                        </div>
+                    <% }); %>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <script>
+    function deleteAccount() {
+        if (confirm('WARNING: This will permanently delete your account and ALL your notes. This action cannot be undone! Are you absolutely sure?')) {
+            if (confirm('Final confirmation: Delete account and all data?')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/auth/delete-account';
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+    }
+
+    function toggleReadMore(noteId, fullText, event) {
+        event.preventDefault();
+        const noteBody = document.getElementById('note-' + noteId);
+        const button = event.target;
+        
+        if (button.textContent === 'Read More') {
+            noteBody.textContent = fullText;
+            button.textContent = 'Read Less';
+            noteBody.style.maxHeight = 'none';
+        } else {
+            noteBody.textContent = fullText.substring(0, 200) + '...';
+            button.textContent = 'Read More';
+            noteBody.style.maxHeight = '6em';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const textarea = document.getElementById('body');
+        const charCount = document.querySelector('.char-count');
+        
+        if (textarea && charCount) {
+            textarea.addEventListener('input', function() {
+                const count = this.value.length;
+                charCount.textContent = count + ' / 5000 characters';
+                if (count > 4500) {
+                    charCount.style.color = '#dc3545';
+                } else {
+                    charCount.style.color = '#666';
+                }
+            });
+        }
+    });
+    </script>
+</body>
+</html>
